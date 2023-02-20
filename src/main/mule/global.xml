@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<http:request-config name="User_System_HTTP_Request_Config_Local" doc:name="HTTP Request configuration" doc:id="b779101a-f4e0-434b-937f-b8c900d93235" basePath="${mysql.user.system.basepath}">
+		<http:request-connection host="${mysql.user.system.host}" port="${mysql.user.system.port}" connectionIdleTimeout="3000000"/>
+		<http:default-headers >
+			<http:default-header key="client_secret" value="${mysql.user.system.client_secret}" />
+			<http:default-header key="client_id" value="${mysql.user.system.client_id}" />
+		</http:default-headers>
+	</http:request-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="918c20c1-6a5d-4ecd-8184-84249f9b201c" file="user-csv-process.properties" />
+</mule>

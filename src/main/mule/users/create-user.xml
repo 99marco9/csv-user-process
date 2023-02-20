@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="create-users" doc:id="6f133421-7ff6-4574-aed3-b5bab4875791" >
+		<set-variable value="#[sizeOf(payload)]" doc:name="Total record" doc:id="11b78802-f506-4007-8c68-777173925f10" variableName="totRecords"/>
+		<set-variable value="#[0]" doc:name="numCorrupted" doc:id="4cea6c6c-e6f3-470b-a278-1db938883cf1" variableName="numCorrupted"/>
+		<set-variable value="#[[]]" doc:name="Right Payload" doc:id="55d24ed6-4ce6-4dd1-a29e-45ca40df412b" variableName="rightPayload"/>
+		<foreach doc:name="For Each" doc:id="8a6e99f8-78b4-4546-a7ad-1ce2ed02daa5" >
+			<choice doc:name="Choice" doc:id="f576b566-8596-4023-a57e-b7075bf66297" >
+				<when expression="#[sizeOf(payload) &lt; 4]">
+					<ee:transform doc:name="Transform Message" doc:id="0b0c28fc-8370-41f7-a9b8-97e05d11f586" >
+						<ee:message >
+						</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="numCorrupted" ><![CDATA[%dw 2.0
+output application/java
+---
+vars.numCorrupted + 1]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</when>
+				<otherwise>
+					<ee:transform doc:name="Transform Message" doc:id="24627fd5-cba3-420b-9555-4e72620dfb0f" >
+						<ee:message >
+						</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="rightPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+flatten(vars.rightPayload << payload)
+]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</otherwise>
+			</choice>
+		</foreach>
+		<http:request method="POST" doc:name="Request" doc:id="9662f947-e22a-4ecd-bf16-42813b4bbd26"  config-ref="${mysql.user.system.config}" path="/users/csv" responseTimeout="300000">
+			<http:body ><![CDATA[#[vars.rightPayload]]]></http:body>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="061dc3e9-2ed7-4923-802a-3cf9dd16df98" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"totalRecords": vars.totRecords,
+	"numCorruptedRecords": vars.numCorrupted,
+	"numSendedRecords": sizeOf(vars.rightPayload)
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
